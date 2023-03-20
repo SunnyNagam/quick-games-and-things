@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PokerFlip</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .card {
+            display: inline-block;
+            margin: 0 5px 10px 10px;
+            padding: 5px 10px;
+            background-color: rgb(17, 17, 17);
+            border-radius: 5px;
+            box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        .hearts {
+            color: red;
+        }
+        .diamonds {
+            color: skyblue;
+        }
+        .spades {
+            color: white;
+        }
+        .clubs {
+            color: green;
+        }
+        .community-cards {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        body {
+            background-color: rgb(39, 39, 58);
+            color: white;
+        }
+        .full-height {
+            min-height: 100vh;
+        }
+        .card-container {
+            height: 10vh;
+        }
+    </style>
+</head>
+<body>
+    <div class="container d-flex flex-column justify-content-center full-height">
+        <div class="row">
+            <div class="col text-center">
+                <h1>PokerFlip</h1>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col text-center">
+                <button id="drawButton" class="btn btn-primary">Draw</button>
+            </div>
+        </div>
+        <div class="row">
+            <div id="player1" class="col text-center card-container">
+                <!-- Player 1 cards go here -->
+            </div>
+            <div id="player2" class="col text-center card-container">
+                <!-- Player 2 cards go here -->
+            </div>
+        </div>
+        <div class="row">
+            <div id="community" class="col text-center card-container">
+                <!-- Community cards go here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery and Bootstrap Bundle (includes Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+
+    <script>
+    // Create deck
+    const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
+    const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+    let deck = [];
+
+    function createDeck() {
+        deck = [];
+        for (let suit of suits) {
+            for (let value of values) {
+                deck.push({suit: suit, value: value});
+            }
+        }
+    }
+
+    // Shuffle deck
+    function shuffleDeck() {
+        for (let i = deck.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [deck[i], deck[j]] = [deck[j], deck[i]];
+        }
+    }
+
+    // Draw card
+    function drawCard() {
+        return deck.pop();
+    }
+
+    // Game state
+    let gameState = 'initial';
+    let player1Cards = [];
+    let player2Cards = [];
+    let communityCards = [];
+
+    // Update UI
+    function updateUI() {
+        document.getElementById('player1').innerHTML = player1Cards.map(card => `<div class="card ${card.suit}">${card.value} of ${card.suit}</div>`).join('');
+        document.getElementById('player2').innerHTML = player2Cards.map(card => `<div class="card ${card.suit}">${card.value} of ${card.suit}</div>`).join('');
+        document.getElementById('community').innerHTML = `<div class="community-cards">${communityCards.map(card => `<div class="card ${card.suit}">${card.value} of ${card.suit}</div>`).join('')}</div>`;
+    }
+
+    // Reset game
+    function resetGame() {
+        gameState = 'initial';
+        player1Cards = [];
+        player2Cards = [];
+        communityCards = [];
+        createDeck();
+        shuffleDeck();
+        updateUI();
+    }
+
+    // Game logic
+    document.getElementById('drawButton').addEventListener('click', () => {
+        if (gameState === 'initial') {
+            player1Cards.push(drawCard());
+            player1Cards.push(drawCard());
+            player2Cards.push(drawCard());
+            player2Cards.push(drawCard());
+            gameState = 'flop';
+            document.getElementById('drawButton').innerText = 'Draw Flop';
+        } else if (gameState === 'flop') {
+            communityCards.push(drawCard());
+            communityCards.push(drawCard());
+            communityCards.push(drawCard());
+            gameState = 'turn';
+            document.getElementById('drawButton').innerText = 'Draw Turn';
+        } else if (gameState === 'turn') {
+            communityCards.push(drawCard());
+            gameState = 'river';
+            document.getElementById('drawButton').innerText = 'Draw River';
+        } else if (gameState === 'river') {
+            communityCards.push(drawCard());
+            gameState = 'end';
+            document.getElementById('drawButton').innerText = 'Reset';
+        } else if (gameState === 'end') {
+            resetGame();
+            document.getElementById('drawButton').innerText = 'Draw';
+        }
+
+        updateUI();
+    });
+
+    // Initialize game
+    resetGame();
+    </script>
+</body>
+</html>

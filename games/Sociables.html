@@ -11,13 +11,22 @@
       background-color: #1f253a; /* Background color */
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-
     .centered {
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
       height: 100vh;
+    }
+    .rules-list {
+      list-style-type: none;
+      padding-left: 0;
+    }
+    .rules-list-item {
+      margin-bottom: 5px;
+    }
+    .left-aligned {
+      text-align: left;
     }
   </style>
 </head>
@@ -29,8 +38,19 @@
     </div>
     <div class="row justify-content-center">
       <div class="col-8">
-        <h3 id="drawnCard" class="text-center text-white"></h3>
+        <h3 id="drawnCard" class="text-center text-white text-decoration-underline mb-4"></h3>
         <h3 id="gameRule" class="text-center text-white"></h3>
+      </div>
+    </div>
+    <div class="text-center mt-5">
+      <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#rulesList" aria-expanded="false" aria-controls="rulesList">
+        View All Rules
+      </button>
+      <div class="collapse left-aligned" id="rulesList">
+        <div class="card card-body mt-3">
+          <ul class="rules-list">
+          </ul>
+        </div>
       </div>
     </div>
   </div>
@@ -58,6 +78,15 @@
         13: "Rule for King: King (come up with a rule that will be followed for one whole round. If someone breaks the rule, they drink.)",
     };
 
+    const rulesList = document.querySelector('.rules-list');
+
+    for (const rule in rules) {
+      const listItem = document.createElement('li');
+      listItem.textContent = rules[rule];
+      listItem.classList.add('rules-list-item');
+      rulesList.appendChild(listItem);
+    }
+
     function getRandomCard() {
       const values = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
       const suits = ["hearts", "diamonds", "clubs", "spades"];
@@ -75,7 +104,7 @@
 
     drawCardButton.addEventListener("click", () => {
         const card = getRandomCard();
-        drawnCard.textContent = "Card: "+card.value+" of "+card.suit;
+        drawnCard.textContent = card.value+" of "+card.suit;
         gameRule.textContent = rules[card.valueIndex+1];
     });
   </script>
