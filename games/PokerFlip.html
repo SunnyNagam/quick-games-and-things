@@ -43,6 +43,9 @@
         .card-container {
             height: 10vh;
         }
+        h1 {
+            padding-bottom: 30px;
+        }
     </style>
 </head>
 <body>
@@ -147,7 +150,7 @@
                     break;
                 }
             }
-            if (isFlush && isStraight) return {rank: 9, name: "Straight Flush", kicker: straightCards[0]}; // Straight flush
+            if (isFlush && isStraight) return {rank: 9, name: "Straight Flush", kicker: [straightCards[0]]}; // Straight flush
 
             // Count occurrences of each card value
             const valueCounts = {};
@@ -160,8 +163,8 @@
             if (sortedCounts[0] === 4) return {rank: 8, name: "Four of a kind", kicker: [cards.filter(card => valueCounts[card.value] === 1)[0]]}; // Four of a kind
             if (sortedCounts[0] === 3 && sortedCounts[1] === 2) return {rank: 7, name: "Full House", kicker: []}; // Full house
 
-            if (isFlush) return {rank: 6, name: "Flush", kicker: flushCards[0]}; // Flush
-            if (isStraight) return {rank: 5, name: "Straight", kicker: straightCards[0]}; // Straight
+            if (isFlush) return {rank: 6, name: "Flush", kicker: [flushCards[0]]}; // Flush
+            if (isStraight) return {rank: 5, name: "Straight", kicker: [straightCards[0]]}; // Straight
 
             if (sortedCounts[0] === 3) return {rank: 4, name: "Three of a kind", kicker: cards.filter(card => valueCounts[card.value] === 1).slice(0, 2)}; // Three of a kind
             if (sortedCounts[0] === 2 && sortedCounts[1] === 2) return {rank: 3, name: "Two pair", kicker: [cards.filter(card => valueCounts[card.value] === 1)[0]]}; // Two pair
