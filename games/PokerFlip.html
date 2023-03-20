@@ -109,6 +109,69 @@
     let player2Cards = [];
     let communityCards = [];
 
+    function cardValueToInt(value) {
+        if (value === 'A') return 14;
+        if (value === 'K') return 13;
+        if (value === 'Q') return 12;
+        if (value === 'J') return 11;
+        return parseInt(value);
+        }
+
+    function evaluateHand(cards) {
+        // Sort cards by value
+        cards.sort((a, b) => cardValueToInt(b.value) - cardValueToInt(a.value));
+
+        // Check for flush
+        const isFlush = cards.slice(0, 5).every((card, i, arr) => card.suit === arr[0].suit);
+
+        // Check for straight
+        let isStraight = false;
+        for (let i = 0; i < cards.length - 4; i++) {
+            if (
+                cardValueToInt(cards[i].value) - cardValueToInt(cards[i + 4].value) === 4 &&
+                new Set(cards.slice(i, i + 5).map(card => card.value)).size === 5
+            ) {
+                isStraight = true;
+                break;
+            }
+        }
+
+        if (isFlush && isStraight) return {rank: 9, name: "Straight Flush"}; // Straight flush
+
+        // Count occurrences of each card value
+        const valueCounts = {};
+        for (const card of cards) {
+            valueCounts[card.value] = (valueCounts[card.value] || 0) + 1;
+        }
+
+        const sortedCounts = Object.values(valueCounts).sort((a, b) => b - a);
+
+        if (sortedCounts[0] === 4) return {rank: 8, name: "Four of a kind"}; // Four of a kind
+        if (sortedCounts[0] === 3 && sortedCounts[1] === 2) return {rank: 7, name: "Full House"}; // Full house
+
+        if (isFlush) return {rank: 6, name: "Flush"}; // Flush
+        if (isStraight) return {rank: 5, name: "Straight"}; // Straight
+
+        if (sortedCounts[0] === 3) return {rank: 4, name: "Three of a kind"}; // Three of a kind
+        if (sortedCounts[0] === 2 && sortedCounts[1] === 2) return {rank: 3, name: "Two pair"}; // Two pair
+        if (sortedCounts[0] === 2) return {rank: 2, name: "One pair"}; // One pair
+
+        return {rank: 1, name: "High card"}; // High card
+    }
+
+    function displayHandResults() {
+        const player1Hand = evaluateHand([...player1Cards, ...communityCards]);
+        const player2Hand = evaluateHand([...player2Cards, ...communityCards]);
+
+        const player1Results = `<div>${player1Hand.name} (Rank: ${player1Hand.rank})</div>`;
+        const player2Results = `<div>${player2Hand.name} (Rank: ${player2Hand.rank})</div>`;
+
+        document.getElementById('player1').innerHTML += player1Results;
+        document.getElementById('player2').innerHTML += player2Results;
+        console.log(player1Results, player2Results);
+        console.log(document.getElementById('player1').innerHTML);
+    }
+
     // Update UI
     function updateUI() {
         document.getElementById('player1').innerHTML = player1Cards.map(card => `<div class="card ${card.suit}">${card.value} of ${card.suit}</div>`).join('');
@@ -136,26 +199,30 @@
             player2Cards.push(drawCard());
             gameState = 'flop';
             document.getElementById('drawButton').innerText = 'Draw Flop';
+            updateUI();
         } else if (gameState === 'flop') {
             communityCards.push(drawCard());
             communityCards.push(drawCard());
             communityCards.push(drawCard());
             gameState = 'turn';
             document.getElementById('drawButton').innerText = 'Draw Turn';
+            updateUI();
         } else if (gameState === 'turn') {
             communityCards.push(drawCard());
             gameState = 'river';
             document.getElementById('drawButton').innerText = 'Draw River';
+            updateUI();
         } else if (gameState === 'river') {
             communityCards.push(drawCard());
             gameState = 'end';
+            updateUI();
+            displayHandResults();
             document.getElementById('drawButton').innerText = 'Reset';
         } else if (gameState === 'end') {
             resetGame();
             document.getElementById('drawButton').innerText = 'Draw';
+            updateUI();
         }
-
-        updateUI();
     });
 
     // Initialize game
