@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Game 1</title>
+    <title>LQ Questions</title>
     <style>
       #question-container {
         font-size: 24px;
@@ -13,7 +13,7 @@
     <button id="pick-question">Pick a Question</button>
     <div id="question-container"></div>
     <script>
-      fetch('../LQQuestions.json')
+      fetch('LQQuestions.json')
         .then(response => response.json())
         .then(questions => {
           const pickButton = document.querySelector('#pick-question');
@@ -21,7 +21,7 @@
           pickButton.addEventListener('click', () => {
             const randomIndex = Math.floor(Math.random() * questions.length);
             const randomQuestion = questions[randomIndex];
-            questionContainer.textContent = randomQuestion.question;
+            questionContainer.textContent = randomQuestion;
           });
         });
     </script>
