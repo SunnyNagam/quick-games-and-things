@@ -82,19 +82,16 @@ function drawGrid(scene) {
 }
 
 function update() {
-    const rotationSpeed = 0.05;
-
-    if (cursors.left.isDown && launcher.angle > -75) {
-        launcher.angle -= rotationSpeed;
-    } else if (cursors.right.isDown && launcher.angle < 75) {
-        launcher.angle += rotationSpeed;
-    }
-
     if (activeBubble) {
         activeBubble.x = launcher.x;
         activeBubble.y = launcher.y - launcher.height / 2;
     }
+
+    // Update launcher angle to look at the mouse pointer
+    const pointer = this.input.activePointer;
+    launcher.angle = Phaser.Math.RadToDeg(Phaser.Math.Angle.Between(launcher.x, launcher.y, pointer.x, pointer.y)) - 90;
 }
+
 
 function shootBubble() {
     if (!activeBubble) {
@@ -127,21 +124,73 @@ function placeBubbleInGrid(bubble, row, column) {
 }
 
 function handleBubbleCollision(bubble1, bubble2) {
-    const closestGridPosition = getClosestGridPosition(bubble1.x, bubble1.y);
-    placeBubbleInGrid(bubble1, closestGridPosition.row, closestGridPosition.column);
-
     bubble1.setVelocity(0, 0);
     bubble1.setImmovable(true);
     bubble2.setVelocity(0, 0);
     bubble2.setImmovable(true);
+
+    const closestGridPosition = getClosestGridPosition(bubble1.x, bubble1.y);
+    placeBubbleInGrid(bubble1, closestGridPosition.row, closestGridPosition.column);
+    const closestGridPosition2 = getClosestGridPosition(bubble2.x, bubble2.y);
+    placeBubbleInGrid(bubble2, closestGridPosition2.row, closestGridPosition2.column);
+
+    // Check for popping
+    checkForPopping(bubble1);
+    checkForPopping(bubble2);
+}
+
+function checkForPopping(bubble) {
+    const visited = new Set();
+    const colorToMatch = bubble.color;
+
+    function visit(row, column) {
+        if (row < 0 || row >= grid.rows || column < 0 || column >= grid.columns) {
+            return [];
+        }
+
+        const index = row * grid.columns + column;
+        if (visited.has(index)) {
+            return [];
+        }
+
+        visited.add(index);
+
+        const bubbleAtPosition = bubbles.find(b => {
+            const gridPosition = getClosestGridPosition(b.x, b.y);
+            return gridPosition.row === row && gridPosition.column === column;
+        });
+
+        if (!bubbleAtPosition || bubbleAtPosition.color !== colorToMatch) {
+            return [];
+        }
+
+        const neighbors = [
+            visit(row - 1, column),
+            visit(row + 1, column),
+            visit(row, column - 1),
+            visit(row, column + 1)
+        ];
+
+        return [bubbleAtPosition, ...neighbors.flat()];
+    }
+
+    const gridPosition = getClosestGridPosition(bubble.x, bubble.y);
+    const connectedBubbles = visit(gridPosition.row, gridPosition.column);
+
+    if (connectedBubbles.length >= 3) {
+        connectedBubbles.forEach(b => {
+            bubbles = bubbles.filter(bubble => bubble !== b);
+            b.destroy();
+        });
+    }
 }
 
 function handleWallCollision(bubble) {
-    const closestGridPosition = getClosestGridPosition(bubble.x, bubble.y);
-    placeBubbleInGrid(bubble, closestGridPosition.row, closestGridPosition.column);
-
     bubble.setVelocity(0, 0);
     bubble.setImmovable(true);
+
+    const closestGridPosition = getClosestGridPosition(bubble.x, bubble.y);
+    placeBubbleInGrid(bubble, closestGridPosition.row, closestGridPosition.column);
 }
 
 function createBubble(scene) {
@@ -156,13 +205,12 @@ function createBubble(scene) {
 
     scene.physics.world.on('worldbounds', (body, up, down, left, right)=>
     {
-        console.log(up, down, left, right )
         if (body.gameObject === bubble && up) {
             handleWallCollision(bubble);
         }
     });
 
-    scene.physics.add.collider(bubble, bubbles, handleBubbleCollision);
+    scene.physics.add.overlap(bubble, bubbles, handleBubbleCollision, null, this);
 
     return bubble;
 }
