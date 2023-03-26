@@ -87,6 +87,7 @@ function createBubbleAt(scene, row, column) {
     bubble.body.onWorldBounds=true;
     bubble.setBounce(1, 1);
     bubble.color = randomColor;
+    createBubbleText(bubble, randomColor);
 
     return bubble;
 }
@@ -119,7 +120,7 @@ function update() {
 
     // Update launcher angle to look at the mouse pointer
     const pointer = this.input.activePointer;
-    launcher.angle = Phaser.Math.RadToDeg(Phaser.Math.Angle.Between(launcher.x, launcher.y, pointer.x, pointer.y));
+    launcher.angle = Phaser.Math.RadToDeg(Phaser.Math.Angle.Between(launcher.x, launcher.y, pointer.x, pointer.y)) + 90;
 }
 
 
@@ -151,6 +152,9 @@ function placeBubbleInGrid(bubble, row, column) {
 
     bubble.x = x;
     bubble.y = y;
+
+    bubble.text.x = x;
+    bubble.text.y = y;
 }
 
 function handleBubbleCollision(bubble1, bubble2) {
@@ -195,10 +199,14 @@ function checkForPopping(bubble) {
         }
 
         const neighbors = [
-            visit(row - 1, column),
-            visit(row + 1, column),
-            visit(row, column - 1),
-            visit(row, column + 1)
+            visit(row - 1, column), // Top
+            visit(row + 1, column), // Bottom
+            visit(row, column - 1), // Left
+            visit(row, column + 1), // Right
+            visit(row - 1, column - 1), // Top-left
+            visit(row - 1, column + 1), // Top-right
+            visit(row + 1, column - 1), // Bottom-left
+            visit(row + 1, column + 1)  // Bottom-right
         ];
 
         return [bubbleAtPosition, ...neighbors.flat()];
@@ -210,9 +218,72 @@ function checkForPopping(bubble) {
     if (connectedBubbles.length >= 3) {
         connectedBubbles.forEach(b => {
             bubbles = bubbles.filter(bubble => bubble !== b);
+            b.text.destroy();
             b.destroy();
         });
+
+        // Disconnect floating bubbles
+        disconnectFloatingBubbles();
     }
+}
+
+function getConnectedBubbles() {
+    const visited = new Set();
+
+    function visit(row, column) {
+        if (row < 0 || row >= grid.rows || column < 0 || column >= grid.columns) {
+            return [];
+        }
+
+        const index = row * grid.columns + column;
+        if (visited.has(index)) {
+            return [];
+        }
+
+        visited.add(index);
+
+        const bubbleAtPosition = bubbles.find(b => {
+            const gridPosition = getClosestGridPosition(b.x, b.y);
+            return gridPosition.row === row && gridPosition.column === column;
+        });
+
+        if (!bubbleAtPosition) {
+            return [];
+        }
+
+        const neighbors = [
+            visit(row - 1, column), // Top
+            visit(row + 1, column), // Bottom
+            visit(row, column - 1), // Left
+            visit(row, column + 1), // Right
+            visit(row - 1, column - 1), // Top-left
+            visit(row - 1, column + 1), // Top-right
+            visit(row + 1, column - 1), // Bottom-left
+            visit(row + 1, column + 1)  // Bottom-right
+        ];
+
+        return [bubbleAtPosition, ...neighbors.flat()];
+    }
+
+    const connectedBubbles = [];
+    for (let column = 0; column < grid.columns; column++) {
+        connectedBubbles.push(...visit(0, column));
+    }
+
+    return connectedBubbles;
+}
+
+function disconnectFloatingBubbles() {
+    const connectedBubbles = getConnectedBubbles();
+    const floatingBubbles = bubbles.filter(bubble => !connectedBubbles.includes(bubble));
+
+    floatingBubbles.forEach(bubble => {
+        bubbles = bubbles.filter(b => b !== bubble);
+        bubble.text.destroy();
+        bubble.setVelocity(0, 300); // You can adjust the falling speed
+        bubble.body.setAllowGravity(true);
+        bubble.body.setCollideWorldBounds(false);
+    });
 }
 
 function handleWallCollision(bubble) {
@@ -232,6 +303,7 @@ function createBubble(scene) {
     bubble.body.onWorldBounds=true;
     bubble.setBounce(1, 1);
     bubble.color = randomColor;
+    createBubbleText(bubble, randomColor);
 
     scene.physics.world.on('worldbounds', (body, up, down, left, right)=>
     {
@@ -243,4 +315,16 @@ function createBubble(scene) {
     scene.physics.add.overlap(bubble, bubbles, handleBubbleCollision, null, this);
 
     return bubble;
+}
+
+function createBubbleText(bubble, color) {
+    const text = new Phaser.GameObjects.Text(bubble.scene, bubble.x, bubble.y, color.charAt(0).toUpperCase(), {
+        fontSize: '18px',
+        fontWeight: 'bold',
+        color: '#fff',
+        align: 'center'
+    }).setOrigin(0.5);
+
+    bubble.scene.add.existing(text);
+    bubble.text = text;
 }
