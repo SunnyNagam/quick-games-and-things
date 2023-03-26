@@ -23,6 +23,8 @@ let launcher;
 let cursors;
 let activeBubble;
 let launcherSpeed = 600;
+let gameWonText;
+let gameLostText;
 const bubbleColors = ['red', 'blue', 'green', 'yellow'];
 const grid = {
     rows: 10,
@@ -61,6 +63,21 @@ function create() {
     drawGrid(this);
 
     generateStartingBubbles(this);
+
+    gameWonText = this.add.text(config.width / 2, config.height / 2, "You won!!!", { fontSize: '64px', fill: '#FFF' });
+    gameWonText.setOrigin(0.5);
+    gameWonText.visible = false;
+
+    gameLostText = this.add.text(config.width / 2, config.height / 2, "You lost!!!", { fontSize: '64px', fill: '#FFF' });
+    gameLostText.setOrigin(0.5);
+    gameLostText.visible = false;
+
+    this.time.addEvent({
+        delay: 30*1000, // delay in milliseconds
+        callback: generateNewRow,
+        callbackScope: this,
+        loop: true // set to true to repeat the timer indefinitely
+    });
 }
 
 function generateStartingBubbles(scene) {
@@ -74,6 +91,23 @@ function generateStartingBubbles(scene) {
             }
         }
     }
+}
+
+function generateNewRow() {
+    // Generate a new row of bubbles at the top
+    for (let column = 0; column < grid.columns; column++) {
+        const bubble = createBubbleAt(this, -1, column);
+        bubbles.push(bubble);
+    }
+
+    // Lower the rest of the bubbles
+    bubbles.forEach(bubble => {
+        const gridPosition = getClosestGridPosition(bubble.x, bubble.y);
+        placeBubbleInGrid(bubble, gridPosition.row + 1, gridPosition.column);
+        if (gridPosition.row >= grid.rows) {
+            gameLostText.visible = true;
+        }
+    });
 }
 
 function createBubbleAt(scene, row, column) {
@@ -224,6 +258,12 @@ function checkForPopping(bubble) {
 
         // Disconnect floating bubbles
         disconnectFloatingBubbles();
+
+        if (bubbles.length === 0) {
+            // End the game here
+            console.log("Game over");
+            gameWonText.visible = true; // Show the "You won!!!" message
+        }
     }
 }
 
