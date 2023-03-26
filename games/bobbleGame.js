@@ -22,6 +22,7 @@ let bubbles;
 let launcher;
 let cursors;
 let activeBubble;
+let lastBubbleColor;
 let launcherSpeed = 600;
 let gameWonText;
 let gameLostText;
@@ -167,6 +168,7 @@ function shootBubble() {
     this.physics.velocityFromAngle(Phaser.Math.RadToDeg(angle), launcherSpeed, activeBubble.body.velocity);
 
     bubbles.push(activeBubble);
+    lastBubbleColor = activeBubble.color;
     activeBubble = null;
 
     this.time.delayedCall(250, () => {
@@ -209,7 +211,7 @@ function handleBubbleCollision(bubble1, bubble2) {
 
 function checkForPopping(bubble) {
     const visited = new Set();
-    const colorToMatch = bubble.color;
+    const colorToMatch = lastBubbleColor;
 
     function visit(row, column) {
         if (row < 0 || row >= grid.rows || column < 0 || column >= grid.columns) {
