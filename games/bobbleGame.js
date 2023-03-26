@@ -59,6 +59,36 @@ function create() {
     this.physics.world.setBoundsCollision(true, true, true, true);
 
     drawGrid(this);
+
+    generateStartingBubbles(this);
+}
+
+function generateStartingBubbles(scene) {
+    const startingRows = grid.rows / 2;
+    for (let row = 0; row < startingRows; row++) {
+        for (let column = 0; column < grid.columns; column++) {
+            const chance = Phaser.Math.RND.between(0, 100);
+            if (chance < 70) { // 70% chance to create a bubble
+                const bubble = createBubbleAt(scene, row, column);
+                bubbles.push(bubble);
+            }
+        }
+    }
+}
+
+function createBubbleAt(scene, row, column) {
+    const randomColor = Phaser.Math.RND.pick(bubbleColors);
+    const x = column * grid.cellSize + grid.offsetX;
+    const y = row * grid.cellSize + grid.offsetY;
+    const bubble = scene.physics.add.sprite(x, y, `bubble-${randomColor}`);
+    bubble.setOrigin(0.5, 0.5);
+    bubble.body.setAllowGravity(false);
+    bubble.body.setCollideWorldBounds(true);
+    bubble.body.onWorldBounds=true;
+    bubble.setBounce(1, 1);
+    bubble.color = randomColor;
+
+    return bubble;
 }
 
 function drawGrid(scene) {
@@ -89,7 +119,7 @@ function update() {
 
     // Update launcher angle to look at the mouse pointer
     const pointer = this.input.activePointer;
-    launcher.angle = Phaser.Math.RadToDeg(Phaser.Math.Angle.Between(launcher.x, launcher.y, pointer.x, pointer.y)) - 90;
+    launcher.angle = Phaser.Math.RadToDeg(Phaser.Math.Angle.Between(launcher.x, launcher.y, pointer.x, pointer.y));
 }
 
 
